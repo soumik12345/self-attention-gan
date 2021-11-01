@@ -6,17 +6,27 @@ from .initializers import L2RandomNormal
 
 
 class SpectralNorm(Model):
-
-    def __init__(self, filters, kernel_size, power_iterations=1, epsilon=1e-12, stddev=2e-2, *args, **kwargs):
+    def __init__(
+        self,
+        filters,
+        kernel_size,
+        power_iterations=1,
+        epsilon=1e-12,
+        stddev=2e-2,
+        *args,
+        **kwargs,
+    ):
         super().__init__(
-            filters, kernel_size,
+            filters,
+            kernel_size,
             kernel_initializer=initializers.TruncatedNormal,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
         self.power_iterations = power_iterations
         self.epsilon = epsilon
         self._stddev = stddev
-    
+
     def build(self, input_shape):
         super().build(input_shape)
         input_shape = tf.TensorSpec(input_shape)
@@ -34,9 +44,10 @@ class SpectralNorm(Model):
             shape=(1, self.w_shape[-1]),
             # initializer=initializers.TruncatedNormal(stddev=self._stddev),
             initializer=L2RandomNormal(epsilon=self.epsilon, stddev=self._stddev),
-            dtype=self.w.dtype, trainable=False
+            dtype=self.w.dtype,
+            trainable=False,
         )
-    
+
     @tf.function
     def normalize_weights(self):
         w = tf.reshape(self.w, [-1, self.w_shape[-1]])
@@ -47,18 +58,15 @@ class SpectralNorm(Model):
         sigma = tf.matmul(tf.matmul(v, w), u, transpose_b=True)
         self.w.assign(self.w / sigma)
         self.u.assign(u)
-    
+
     def get_config(self):
-        config = {
-            "power_iterations": self.power_iterations
-        }
+        config = {"power_iterations": self.power_iterations}
         base_config = super().get_config()
         return {**base_config, **config}
-    
+
     def compute_output_shape(self, input_shape):
-        return tf.TensorShape(
-            self.layer.compute_output_shape(input_shape).as_list())
-    
+        return tf.TensorShape(self.layer.compute_output_shape(input_shape).as_list())
+
     def call(self, inputs, training=None):
         training = backend.learning_phase() if training is None else training
         if training:
