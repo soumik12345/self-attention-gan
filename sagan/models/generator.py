@@ -9,10 +9,7 @@ from .attention import SelfAttention
 
 
 def build_generator(
-    image_size: int = 64,
-    latent_dim: int = 100,
-    filters: int = 64,
-    kernel_size: int = 4
+    image_size: int = 64, latent_dim: int = 100, filters: int = 64, kernel_size: int = 4
 ):
     input_tensor = keras.Input(shape=(latent_dim,))
     x = layers.Reshape((1, 1, latent_dim))(input_tensor)
@@ -27,7 +24,7 @@ def build_generator(
                 filters=current_filters,
                 kernel_size=kernel_size,
                 strides=strides,
-                padding="same"
+                padding="same",
             )
         )(x)
         x = layers.BatchNormalization()(x)
@@ -40,7 +37,7 @@ def build_generator(
                 filters=current_filters,
                 kernel_size=kernel_size,
                 strides=2,
-                padding="same"
+                padding="same",
             )
         )(x)
         x = layers.BatchNormalization()(x)
@@ -48,11 +45,10 @@ def build_generator(
     x, attention_2 = SelfAttention(current_filters)(x)
     x = tfa.layers.SpectralNormalization(
         layers.Conv2DTranspose(
-            filters=3,
-            kernel_size=kernel_size,
-            strides=2,
-            padding="same"
+            filters=3, kernel_size=kernel_size, strides=2, padding="same"
         )
     )(x)
     output_tensor = layers.Activation("tanh")(x)
-    return keras.Model(input_tensor, [output_tensor, attention_1, attention_2])
+    return keras.Model(
+        input_tensor, [output_tensor, attention_1, attention_2], name="generator"
+    )
