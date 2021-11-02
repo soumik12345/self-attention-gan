@@ -5,7 +5,7 @@ from tensorflow.keras import layers, initializers, backend, Model
 from .initializers import L2RandomNormal
 
 
-class SpectralNorm(Model):
+class SpectralNorm(layers.Layer):
     def __init__(
         self,
         filters,
