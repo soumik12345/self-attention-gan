@@ -6,6 +6,7 @@ from tensorflow import keras
 
 from models.generator import build_generator
 from models.discriminator import build_discriminator
+from utils import save_plot
 
 
 ## Define the hyperparameters
@@ -15,31 +16,39 @@ EPOCHS = 100
 generator_save_path = "./saved_models/generator.h5"
 discriminator_save_path = "./saved_models/discriminator.h5"
 
-## Save the images
-def save_plot(examples, epoch, n):
-    examples = (examples + 1) / 2.0
-    for i in range(n * n):
-        plt.subplot(n, n, i + 1)
-        plt.axis("off")
-        plt.imshow(examples[i])
-    filename = f"/samples/demo-{epoch+1}.png"
-    plt.savefig(filename)
-    plt.close()
-
-
 # Build the SAGAN module
 class SAGAN(keras.Model):
-    def __init__(self, discriminator, generator, latent_dim, **kwargs):
+    def __init__(self, discriminator, generator, latent_dim, gp_weight=10.0, **kwargs):
         super(SAGAN, self).__init__(**kwargs)
         self.discriminator = discriminator
         self.generator = generator
         self.latent_dim = latent_dim
+        self.gp_weight = gp_weight
 
     def compile(self, d_optimizer, g_optimizer, loss_fn):
         super(SAGAN, self).compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
         self.loss_fn = loss_fn
+
+    # Calculate the gradient_penalty.
+    def gradient_penalty(self, batch_size, real_images, fake_images):
+        # Get the interpolated image
+        alpha = tf.random.normal([batch_size, 1, 1, 1], 0.0, 1.0)
+        diff = fake_images - real_images
+        interpolated = real_images + alpha * diff
+
+        with tf.GradientTape() as gp_tape:
+            gp_tape.watch(interpolated)
+            # 1. Get the discriminator output for this interpolated image.
+            pred = self.discriminator(interpolated, training=True)
+
+        # 2. Calculate the gradients w.r.t to this interpolated image.
+        grads = gp_tape.gradient(pred, [interpolated])[0]
+        # 3. Calculate the norm of the gradients.
+        norm = tf.sqrt(tf.reduce_sum(tf.square(grads), axis=[1, 2, 3]))
+        gp = tf.reduce_mean((norm - 1.0) ** 2)
+        return gp
 
     def train_step(self, real_images):
         batch_size = tf.shape(real_images)[0]
@@ -65,7 +74,13 @@ class SAGAN(keras.Model):
 
             with tf.GradientTape() as rtape:
                 predictions = self.discriminator(real_images)
-                d2_loss = self.loss_fn(labels, predictions)
+                d_cost = self.loss_fn(labels, predictions)
+
+                # Calculate the gradient penalty
+                gp = self.gradient_penalty(batch_size, real_images, random_latent_vectors)
+                # Add the gradient penalty to the original discriminator loss
+                d2_loss = d_cost + gp * self.gp_weight
+                
             grads = rtape.gradient(d2_loss, self.discriminator.trainable_weights)
             self.d_optimizer.apply_gradients(
                 zip(grads, self.discriminator.trainable_weights)
