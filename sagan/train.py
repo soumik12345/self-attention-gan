@@ -77,10 +77,12 @@ class SAGAN(keras.Model):
                 d_cost = self.loss_fn(labels, predictions)
 
                 # Calculate the gradient penalty
-                gp = self.gradient_penalty(batch_size, real_images, random_latent_vectors)
+                gp = self.gradient_penalty(
+                    batch_size, real_images, random_latent_vectors
+                )
                 # Add the gradient penalty to the original discriminator loss
                 d2_loss = d_cost + gp * self.gp_weight
-                
+
             grads = rtape.gradient(d2_loss, self.discriminator.trainable_weights)
             self.d_optimizer.apply_gradients(
                 zip(grads, self.discriminator.trainable_weights)
