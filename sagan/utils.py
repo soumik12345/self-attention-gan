@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 ## Save the images
 def save_plot(examples, epoch, n):
@@ -10,3 +11,6 @@ def save_plot(examples, epoch, n):
     filename = f"/samples/demo-{epoch+1}.png"
     plt.savefig(filename)
     plt.close()
+
+def w_loss(y_true, y_pred):
+    return tf.reduce_mean(y_true * y_pred)
