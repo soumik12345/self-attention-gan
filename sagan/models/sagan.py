@@ -1,7 +1,7 @@
 from absl import app
 from absl import flags
 
-from ml_collections.config_flags import config_flags
+import ml_collections
 
 import tensorflow as tf
 from tensorflow import keras
@@ -14,11 +14,11 @@ FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file("experiment_configs")
 
 class SelfAttentionGAN(keras.Model):
-    def __init__(self, FLAGS.experiment_configs.latent_dim, FLAGS.experiment_configs.gp_weight, **kwargs):
+    def __init__(self, configs: ml_collections.ConfigDicts, **kwargs):
         super(SelfAttentionGAN, self).__init__(**kwargs)
-        self.latent_dim = FLAGS.experiment_configs.latent_dim
-        self.gp_weight = FLAGS.experiment_configs.gp_weight
-        self.generator = build_generator(FLAGS.experiment_configs.image_size, FLAGS.experiment_configs.latent_dim)
+        self.latent_dim = configs.latent_dim
+        self.gp_weight = configs.gp_weight
+        self.generator = build_generator(configs.image_size, configs.latent_dim)
         self.discriminator = build_discriminator(FLAGS.experiment_configs.image_size)
 
     def compile(self, g_optimizer, d_optimizer, **kwargs):

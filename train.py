@@ -1,8 +1,6 @@
 from absl import app
 from absl import flags
 
-from ml_collections.config_flags import config_flags
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,21 +11,21 @@ from sagan.models.generator import build_generator
 from sagan.models.discriminator import build_discriminator
 from sagan.models.sagan import SelfAttentionGAN
 from sagan.dataloader import DataLoader
-from sagan.utils import save_plot
+from sagan.utils import GANMonitor
 
 FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file("experiment_configs")
 
 
 ## Define the hyperparameters
-generator_save_path = FLAGS.experiment_configs.save_generator_model_path
-discriminator_save_path = FLAGS.experiment_configs.save_discriminator_model_path
+generator_save_path = configs.save_generator_model_path
+discriminator_save_path = configs.save_discriminator_model_path
 
 generator = build_generator()
 discriminator = build_discriminator()
 dataset = DataLoader.get_dataset()
 
-sagan = SelfAttentionGAN(discriminator, generator, FLAGS.experiment_configs.latent_dim) # Will come from the config file
+sagan = SelfAttentionGAN(discriminator, generator, configs.latent_dim) # Will come from the config file
 
 ## Compile the model
 
@@ -37,18 +35,11 @@ discriminator_optimizer = keras.optimizers.Adam(
     learning_rate=0.0004, beta_1=0, beta_2=0.9
 )
 
-### Define the loss function
-loss_fn = tf.keras.losses.BinaryCrossentropy(from_logits=True, label_smoothing=0.1)
+## Compile the Self-Attention GAN model
+sagan = sagan.compile(discriminator_optimizer, generator_optimizer)
 
-sagan = sagan.compile(discriminator_optimizer, generator_optimizer, loss_fn)
+## Setting up Callback
+cbk = GANMonitor(num_img=3, latent_dim=FLAGS.experiment_configs.lentent_dim)
 
 ## Train the model
-for epoch in range(FLAGS.experiment_configs.epochs): 
-    sagan.fit(dataset, epochs=25)
-    generator.save(generator_save_path)
-    discriminator.save(discriminator_save_path)
-
-    n_samples = 25
-    noise = np.random.normal(size=(n_samples, FLAGS.experiment_configs.batch_size))
-    examples = generator.predict(noise)
-    save_plot(examples, epoch, int(np.sqrt(n_samples)))
+sagan.fit(dataset, batch_size=FLAGS.experiment_configs.batch_size, epochs=FLAGS.experiment_configs.epochs, callbacks=[cbk])
