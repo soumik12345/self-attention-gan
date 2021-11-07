@@ -1,3 +1,8 @@
+from absl import app
+from absl import flags
+
+from ml_collections.config_flags import config_flags
+
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
