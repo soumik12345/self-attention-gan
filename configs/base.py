@@ -13,7 +13,6 @@ def get_config() -> ml_collections.ConfigDicts:
     config.beta_one = 0.1  # Beta One
     config.beta_two = 0.9  # Beta Two
 
-    config.save_generator_model_path = "./saved_models/generator.h5"  # Generator Model Path
-    config.save_discriminator_model_path = "./saved_models/discriminator.h5"  # Discriminator Model Path
+    config.checkpoint_filepath = "./checkpoint/.h5"  # Checkpoint File-Path
 
     return config
