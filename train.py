@@ -19,7 +19,6 @@ def main(_):
     ## Load the model
     sagan = SelfAttentionGAN(FLAGS.experiment_configs.latent_dim)
 
-
     ### Define the optimizers
     generator_optimizer = keras.optimizers.Adam(
         learning_rate=FLAGS.experiment_configs.generator_learning_rate,

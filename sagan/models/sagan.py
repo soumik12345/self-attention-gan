@@ -127,7 +127,7 @@ class SelfAttentionGAN(keras.Model):
         save_traces=True,
     ):
         self.generator.save(
-            filepath,
+            filepath + "_generator.h5",
             overwrite=overwrite,
             include_optimizer=include_optimizer,
             save_format=save_format,
@@ -136,7 +136,7 @@ class SelfAttentionGAN(keras.Model):
             save_traces=save_traces,
         )
         self.discriminator.save(
-            filepath,
+            filepath + "_discriminator.h5",
             overwrite=overwrite,
             include_optimizer=include_optimizer,
             save_format=save_format,
@@ -147,8 +147,14 @@ class SelfAttentionGAN(keras.Model):
 
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
         self.generator.save_weights(
-            filepath, overwrite=overwrite, save_format=save_format, options=options
+            filepath + "_generator.h5",
+            overwrite=overwrite,
+            save_format=save_format,
+            options=options,
         )
         self.discriminator.save_weights(
-            filepath, overwrite=overwrite, save_format=save_format, options=options
+            filepath + "_discriminator.h5",
+            overwrite=overwrite,
+            save_format=save_format,
+            options=options,
         )

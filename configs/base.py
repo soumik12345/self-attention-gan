@@ -13,6 +13,6 @@ def get_config() -> ml_collections.ConfigDicts:
     config.beta_one = 0.1  # Beta One
     config.beta_two = 0.9  # Beta Two
 
-    config.checkpoint_filepath = "./checkpoint/.h5"  # Checkpoint File-Path
+    config.checkpoint_filepath = "./checkpoint/sagan"  # Checkpoint File-Path
 
     return config
