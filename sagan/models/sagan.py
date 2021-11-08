@@ -1,6 +1,3 @@
-from absl import app
-from absl import flags
-
 import ml_collections
 
 import tensorflow as tf
@@ -8,18 +5,20 @@ from tensorflow import keras
 
 from models.generator import build_generator
 from models.discriminator import build_discriminator
-from sagan.utils import w_loss
 
-FLAGS = flags.FLAGS
-config_flags.DEFINE_config_file("experiment_configs")
+
+def w_loss(y_true, y_pred):
+    return tf.reduce_mean(y_true * y_pred)
+
 
 class SelfAttentionGAN(keras.Model):
     def __init__(self, configs: ml_collections.ConfigDicts, **kwargs):
         super(SelfAttentionGAN, self).__init__(**kwargs)
+        self.configs = configs
         self.latent_dim = configs.latent_dim
         self.gp_weight = configs.gp_weight
         self.generator = build_generator(configs.image_size, configs.latent_dim)
-        self.discriminator = build_discriminator(FLAGS.experiment_configs.image_size)
+        self.discriminator = build_discriminator(configs.image_size)
 
     def compile(self, g_optimizer, d_optimizer, **kwargs):
         super(SelfAttentionGAN, self).compile(**kwargs)
@@ -27,9 +26,7 @@ class SelfAttentionGAN(keras.Model):
         self.d_optimizer = d_optimizer
 
     def gradient_penalty(self, batch_size, real_images, fake_images):
-
         """Reference: https://keras.io/examples/generative/wgan_gp/#create-the-wgangp-model"""
-
         alpha = tf.random.normal([batch_size, 1, 1, 1], minavl=0.0, maxval=1.0)
         interpolated_image = real_images + alpha * (fake_images - real_images)
         with tf.GradientTape() as gp_tape:
@@ -91,7 +88,7 @@ class SelfAttentionGAN(keras.Model):
 
     def train_step(self, real_images):
         random_latent_vectors = tf.random.truncated_normal(
-            shape=(FLAGS.experiment_configs.batch_size, self.latent_dim)
+            shape=(self.configs.batch_size, self.latent_dim)
         )
         discriminator_loss, gradient_penalty = self.train_discriminator_step(
             random_latent_vectors, real_images
@@ -102,3 +99,56 @@ class SelfAttentionGAN(keras.Model):
             "discriminator_loss": discriminator_loss,
             "gradient_penalty": gradient_penalty,
         }
+
+    def summary(
+        self, line_length=None, positions=None, print_fn=None, expand_nested=False
+    ):
+        self.generator.summary(
+            line_length=line_length,
+            positions=positions,
+            print_fn=print_fn,
+            expand_nested=expand_nested,
+        )
+        self.discriminator.summary(
+            line_length=line_length,
+            positions=positions,
+            print_fn=print_fn,
+            expand_nested=expand_nested,
+        )
+
+    def save(
+        self,
+        filepath,
+        overwrite=True,
+        include_optimizer=True,
+        save_format=None,
+        signatures=None,
+        options=None,
+        save_traces=True,
+    ):
+        self.generator.save(
+            filepath,
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
+        self.discriminator.save(
+            filepath,
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
+
+    def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
+        self.generator.save_weights(
+            filepath, overwrite=overwrite, save_format=save_format, options=options
+        )
+        self.discriminator.save_weights(
+            filepath, overwrite=overwrite, save_format=save_format, options=options
+        )
