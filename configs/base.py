@@ -1,7 +1,7 @@
 import ml_collections
 
 
-def get_config() -> ml_collections.ConfigDicts:
+def get_config() -> ml_collections.ConfigDict:
     config = ml_collections.ConfigDict()
     config.batch_size = 64  # Batch Size
     config.epochs = 100  # Number of Epochs

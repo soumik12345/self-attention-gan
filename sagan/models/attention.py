@@ -23,7 +23,8 @@ class SelfAttention(layers.Layer):
         query = self.query_convolution(inputs)
         key = self.key_convolution(inputs)
         value = self.value_convolution(inputs)
-        batch_size, height, width, _ = tf.shape(query)
+        query_dim = tf.shape(query)
+        batch_size, height, width = query_dim[0], query_dim[1], query_dim[2]
         proj_query = tf.reshape(query, (batch_size, height * width, -1))
         proj_key = tf.transpose(
             tf.reshape(key, (batch_size, height * width, -1)), (0, 2, 1)

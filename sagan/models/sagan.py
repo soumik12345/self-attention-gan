@@ -3,8 +3,8 @@ import ml_collections
 import tensorflow as tf
 from tensorflow import keras
 
-from models.generator import build_generator
-from models.discriminator import build_discriminator
+from .generator import build_generator
+from .discriminator import build_discriminator
 
 
 def w_loss(y_true, y_pred):
@@ -12,7 +12,7 @@ def w_loss(y_true, y_pred):
 
 
 class SelfAttentionGAN(keras.Model):
-    def __init__(self, configs: ml_collections.ConfigDicts, **kwargs):
+    def __init__(self, configs: ml_collections.ConfigDict, **kwargs):
         super(SelfAttentionGAN, self).__init__(**kwargs)
         self.configs = configs
         self.latent_dim = configs.latent_dim
