@@ -1,1 +1,0 @@
-python3 train.py --experiment_configs configs/base.py
