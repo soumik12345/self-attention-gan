@@ -16,7 +16,7 @@ class SelfAttentionGAN(keras.Model):
         super(SelfAttentionGAN, self).__init__(**kwargs)
         self.configs = configs
         self.latent_dim = configs.latent_dim
-        self.gp_weight = configs.gp_weight
+        # self.gp_weight = configs.gp_weight
         self.generator = build_generator(configs.image_size, configs.latent_dim)
         self.discriminator = build_discriminator(configs.image_size)
 
