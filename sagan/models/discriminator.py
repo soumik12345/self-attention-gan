@@ -1,43 +1,41 @@
 import numpy as np
 
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
 import tensorflow_addons as tfa
 
+from .res_block_down import ResblockDown
 from .attention import SelfAttention
 
 
-def build_discriminator(image_size: int = 64, filters: int = 64, kernel_size: int = 4):
-    input_tensor = keras.Input(shape=(image_size, image_size, 3))
-    current_filters = filters
-    x = input_tensor
-    for i in range(3):
-        current_filters = current_filters * 2
-        x = tfa.layers.SpectralNormalization(
-            layers.Conv2D(
-                filters=current_filters,
-                kernel_size=kernel_size,
-                strides=2,
-                padding="same",
-            )
-        )(x)
-        x = layers.LeakyReLU(alpha=0.1)(x)
-    x, attention_1 = SelfAttention(current_filters)(x)
-    for i in range(int(np.log2(image_size)) - 5):
-        current_filters = current_filters * 2
-        x = tfa.layers.SpectralNormalization(
-            layers.Conv2D(
-                filters=current_filters,
-                kernel_size=kernel_size,
-                strides=2,
-                padding="same",
-            )
-        )(x)
-        x = layers.LeakyReLU(alpha=0.1)(x)
-    x, attention_2 = SelfAttention(current_filters)(x)
-    x = tfa.layers.SpectralNormalization(layers.Conv2D(filters=1, kernel_size=4))(x)
-    output_tensor = layers.Flatten()(x)
-    return keras.Model(
-        input_tensor, [output_tensor, attention_1, attention_2], name="discriminator"
-    )
+def build_discriminator(n_class):
+    DIM = 64
+    IMAGE_SHAPE = (64, 64, 3)
+    input_image = layers.Input(shape=IMAGE_SHAPE)
+    input_labels = layers.Input(shape=(1))
+
+    embedding = layers.Embedding(n_class, 4 * DIM)(input_labels)
+
+    embedding = layers.Flatten()(embedding)
+
+    x = ResblockDown(DIM)(input_image)  # 64
+
+    x = ResblockDown(2 * DIM)(x)  # 32
+
+    x = SelfAttention()(x)
+
+    x = ResblockDown(4 * DIM)(x)  # 16
+
+    x = ResblockDown(4 * DIM, False)(x)  # 4
+
+    x = tf.reduce_sum(x, (1, 2))
+
+    embedded_x = tf.reduce_sum(x * embedding, axis=1, keepdims=True)
+
+    output = layers.Dense(1)(x)
+
+    output += embedded_x
+
+    return keras.models.Model([input_image, input_labels], output, name="discriminator")

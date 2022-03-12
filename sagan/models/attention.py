@@ -1,39 +1,56 @@
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers, initializers
+from tensorflow.keras import layers
+
+from sagan.models.spectral_norm import SpectralNorm
 
 
 class SelfAttention(layers.Layer):
-    def __init__(
-        self, input_dims, trainable=True, name=None, dtype=None, dynamic=False, **kwargs
-    ):
-        super().__init__(
-            trainable=trainable, name=name, dtype=dtype, dynamic=dynamic, **kwargs
-        )
-        self.query_convolution = layers.Conv2D(filters=input_dims // 8, kernel_size=1)
-        self.key_convolution = layers.Conv2D(filters=input_dims // 8, kernel_size=1)
-        self.value_convolution = layers.Conv2D(filters=input_dims // 8, kernel_size=1)
+    def __init__(self):
+        super(SelfAttention, self).__init__()
 
     def build(self, input_shape):
-        self.gamma = self.add_weight(
-            self.name + "_gamma", shape=(), initializer=initializers.Zeros()
+        n, h, w, c = input_shape
+        self.n_feats = h * w
+        self.conv_theta = layers.Conv2D(
+            c // 8,
+            1,
+            padding="same",
+            kernel_constraint=SpectralNorm(),
+            name="Conv_Theta",
+        )
+        self.conv_phi = layers.Conv2D(
+            c // 8, 1, padding="same", kernel_constraint=SpectralNorm(), name="Conv_Phi"
+        )
+        self.conv_g = layers.Conv2D(
+            c // 2, 1, padding="same", kernel_constraint=SpectralNorm(), name="Conv_G"
+        )
+        self.conv_attn_g = layers.Conv2D(
+            c, 1, padding="same", kernel_constraint=SpectralNorm(), name="Conv_AttnG"
+        )
+        self.sigma = self.add_weight(
+            shape=[1], initializer="zeros", trainable=True, name="sigma"
         )
 
-    def call(self, inputs, *args, **kwargs):
-        query = self.query_convolution(inputs)
-        key = self.key_convolution(inputs)
-        value = self.value_convolution(inputs)
-        query_dim = tf.shape(query)
-        batch_size, height, width = query_dim[0], query_dim[1], query_dim[2]
-        proj_query = tf.reshape(query, (batch_size, height * width, -1))
-        proj_key = tf.transpose(
-            tf.reshape(key, (batch_size, height * width, -1)), (0, 2, 1)
-        )
-        proj_value = tf.transpose(
-            tf.reshape(value, (batch_size, height * width, -1)), (0, 2, 1)
-        )
-        energy = tf.matmul(proj_query, proj_key)
-        attention = tf.nn.softmax(energy)
-        out = tf.matmul(proj_value, tf.transpose(attention, (0, 2, 1)))
-        out = tf.reshape(tf.transpose(out, (0, 2, 1)), (batch_size, height, width, -1))
-        return tf.add(tf.multiply(out, self.gamma), inputs), attention
+    def call(self, x):
+        n, h, w, c = x.shape
+        theta = self.conv_theta(x)
+        theta = tf.reshape(theta, (-1, self.n_feats, theta.shape[-1]))
+
+        phi = self.conv_phi(x)
+        phi = tf.nn.max_pool2d(phi, ksize=2, strides=2, padding="VALID")
+        phi = tf.reshape(phi, (-1, self.n_feats // 4, phi.shape[-1]))
+
+        attn = tf.matmul(theta, phi, transpose_b=True)
+        attn = tf.nn.softmax(attn)
+
+        g = self.conv_g(x)
+        g = tf.nn.max_pool2d(g, ksize=2, strides=2, padding="VALID")
+        g = tf.reshape(g, (-1, self.n_feats // 4, g.shape[-1]))
+
+        attn_g = tf.matmul(attn, g)
+        attn_g = tf.reshape(attn_g, (-1, h, w, attn_g.shape[-1]))
+        attn_g = self.conv_attn_g(attn_g)
+
+        output = x + self.sigma * attn_g
+
+        return output
