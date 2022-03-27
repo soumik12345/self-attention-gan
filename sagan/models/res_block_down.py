@@ -14,17 +14,26 @@ class ResblockDown(layers.Layer):
     def build(self, input_shape):
         input_filter = input_shape[-1]
         self.conv_1 = layers.Conv2D(
-            self.filters, 3, padding="same", kernel_constraint=SpectralNorm()
+            filters=self.filters,
+            kernel_size=3,
+            padding="same",
+            kernel_constraint=SpectralNorm(),
         )
         self.conv_2 = layers.Conv2D(
-            self.filters, 3, padding="same", kernel_constraint=SpectralNorm()
+            filters=self.filters,
+            kernel_size=3,
+            padding="same",
+            kernel_constraint=SpectralNorm(),
         )
         self.learned_skip = False
 
         if self.filters != input_filter:
             self.learned_skip = True
             self.conv_3 = layers.Conv2D(
-                self.filters, 1, padding="same", kernel_constraint=SpectralNorm()
+                filters=self.filters,
+                kernel_size=1,
+                padding="same",
+                kernel_constraint=SpectralNorm(),
             )
 
     def down(self, x):

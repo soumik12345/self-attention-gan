@@ -11,22 +11,34 @@ class ConditionBatchNorm(keras.layers.Layer):
 
     def build(self, input_shape):
         self.input_size = input_shape
-        n, h, w, c = input_shape
+        batch_size, height, width, num_channels = input_shape
 
         self.gamma = self.add_weight(
-            shape=[self.n_class, c], initializer="ones", trainable=True, name="gamma"
+            shape=[self.n_class, num_channels],
+            initializer="ones",
+            trainable=True,
+            name="gamma",
         )
 
         self.beta = self.add_weight(
-            shape=[self.n_class, c], initializer="zeros", trainable=True, name="beta"
+            shape=[self.n_class, num_channels],
+            initializer="zeros",
+            trainable=True,
+            name="beta",
         )
 
         self.moving_mean = self.add_weight(
-            shape=[1, 1, 1, c], initializer="zeros", trainable=False, name="moving_mean"
+            shape=[1, 1, 1, num_channels],
+            initializer="zeros",
+            trainable=False,
+            name="moving_mean",
         )
 
         self.moving_var = self.add_weight(
-            shape=[1, 1, 1, c], initializer="ones", trainable=False, name="moving_var"
+            shape=[1, 1, 1, num_channels],
+            initializer="ones",
+            trainable=False,
+            name="moving_var",
         )
 
     def call(self, x, labels, training=False):

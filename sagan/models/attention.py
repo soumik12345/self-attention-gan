@@ -5,38 +5,50 @@ from sagan.models.spectral_norm import SpectralNorm
 
 
 class SelfAttention(layers.Layer):
-    def __init__(self):
-        super(SelfAttention, self).__init__()
+    def __init__(self, **kwargs):
+        super(SelfAttention, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        n, h, w, c = input_shape
-        self.n_feats = h * w
-        self.conv_theta = layers.Conv2D(
-            c // 8,
-            1,
+        batch_size, height, width, num_channels = input_shape
+        self.n_feats = height * width
+        self.query_conv = layers.Conv2D(
+            filters=num_channels // 8,
+            kernel_size=1,
             padding="same",
             kernel_constraint=SpectralNorm(),
             name="Conv_Theta",
         )
-        self.conv_phi = layers.Conv2D(
-            c // 8, 1, padding="same", kernel_constraint=SpectralNorm(), name="Conv_Phi"
+        self.key_conv = layers.Conv2D(
+            filters=num_channels // 8,
+            kernel_size=1,
+            padding="same",
+            kernel_constraint=SpectralNorm(),
+            name="Conv_Phi",
         )
         self.conv_g = layers.Conv2D(
-            c // 2, 1, padding="same", kernel_constraint=SpectralNorm(), name="Conv_G"
+            filters=num_channels // 2,
+            kernel_size=1,
+            padding="same",
+            kernel_constraint=SpectralNorm(),
+            name="Conv_G",
         )
-        self.conv_attn_g = layers.Conv2D(
-            c, 1, padding="same", kernel_constraint=SpectralNorm(), name="Conv_AttnG"
+        self.value_conv = layers.Conv2D(
+            filters=num_channels,
+            kernel_size=1,
+            padding="same",
+            kernel_constraint=SpectralNorm(),
+            name="Conv_AttnG",
         )
         self.sigma = self.add_weight(
             shape=[1], initializer="zeros", trainable=True, name="sigma"
         )
 
     def call(self, x):
-        n, h, w, c = x.shape
-        theta = self.conv_theta(x)
+        batch_size, height, width, num_channels = x.shape
+        theta = self.query_conv(x)
         theta = tf.reshape(theta, (-1, self.n_feats, theta.shape[-1]))
 
-        phi = self.conv_phi(x)
+        phi = self.key_conv(x)
         phi = tf.nn.max_pool2d(phi, ksize=2, strides=2, padding="VALID")
         phi = tf.reshape(phi, (-1, self.n_feats // 4, phi.shape[-1]))
 
@@ -48,8 +60,8 @@ class SelfAttention(layers.Layer):
         g = tf.reshape(g, (-1, self.n_feats // 4, g.shape[-1]))
 
         attn_g = tf.matmul(attn, g)
-        attn_g = tf.reshape(attn_g, (-1, h, w, attn_g.shape[-1]))
-        attn_g = self.conv_attn_g(attn_g)
+        attn_g = tf.reshape(attn_g, (-1, height, width, attn_g.shape[-1]))
+        attn_g = self.value_conv(attn_g)
 
         output = x + self.sigma * attn_g
 

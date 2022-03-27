@@ -14,15 +14,15 @@ class Resblock(layers.Layer):
     def build(self, input_shape):
         input_filter = input_shape[-1]
         self.conv_1 = layers.Conv2D(
-            self.filters,
-            3,
+            filters=self.filters,
+            kernel_size=3,
             padding="same",
             name="conv2d_1",
             kernel_constraint=SpectralNorm(),
         )
         self.conv_2 = layers.Conv2D(
-            self.filters,
-            3,
+            filters=self.filters,
+            kernel_size=3,
             padding="same",
             name="conv2d_2",
             kernel_constraint=SpectralNorm(),
@@ -34,8 +34,8 @@ class Resblock(layers.Layer):
         if self.filters != input_filter:
             self.learned_skip = True
             self.conv_3 = layers.Conv2D(
-                self.filters,
-                1,
+                filters=self.filters,
+                kernel_size=1,
                 padding="same",
                 name="conv2d_3",
                 kernel_constraint=SpectralNorm(),
