@@ -1,13 +1,9 @@
-import numpy as np
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-import tensorflow_addons as tfa
-
-from .res_block_down import ResblockDown
 from .attention import SelfAttention
+from .res_block_down import ResblockDown
 
 
 def build_discriminator(n_class):

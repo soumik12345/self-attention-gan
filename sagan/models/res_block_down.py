@@ -1,8 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
-from sagan.models.condition_batchnorm import ConditionBatchNorm
-from sagan.models.spectral_norm import SpectralNorm
+import tensorflow_addons as tfa
 
 
 class ResblockDown(layers.Layer):
@@ -13,27 +12,18 @@ class ResblockDown(layers.Layer):
 
     def build(self, input_shape):
         input_filter = input_shape[-1]
-        self.conv_1 = layers.Conv2D(
-            filters=self.filters,
-            kernel_size=3,
-            padding="same",
-            kernel_constraint=SpectralNorm(),
+        self.conv_1 = tfa.layers.SpectralNormalization(
+            layers.Conv2D(filters=self.filters, kernel_size=3, padding="same")
         )
-        self.conv_2 = layers.Conv2D(
-            filters=self.filters,
-            kernel_size=3,
-            padding="same",
-            kernel_constraint=SpectralNorm(),
+        self.conv_2 = tfa.layers.SpectralNormalization(
+            layers.Conv2D(filters=self.filters, kernel_size=3, padding="same")
         )
         self.learned_skip = False
 
         if self.filters != input_filter:
             self.learned_skip = True
-            self.conv_3 = layers.Conv2D(
-                filters=self.filters,
-                kernel_size=1,
-                padding="same",
-                kernel_constraint=SpectralNorm(),
+            self.conv_3 = tfa.layers.SpectralNormalization(
+                layers.Conv2D(filters=self.filters, kernel_size=1, padding="same")
             )
 
     def down(self, x):

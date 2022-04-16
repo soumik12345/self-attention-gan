@@ -1,7 +1,6 @@
 import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow.keras import layers
-
-from sagan.models.spectral_norm import SpectralNorm
 
 
 class SelfAttention(layers.Layer):
@@ -11,34 +10,42 @@ class SelfAttention(layers.Layer):
     def build(self, input_shape):
         batch_size, height, width, num_channels = input_shape
         self.n_feats = height * width
-        self.query_conv = layers.Conv2D(
-            filters=num_channels // 8,
-            kernel_size=1,
-            padding="same",
-            kernel_constraint=SpectralNorm(),
-            name="Conv_Theta",
+        self.query_conv = tfa.layers.SpectralNormalization(
+            layers.Conv2D(
+                filters=num_channels // 8,
+                kernel_size=1,
+                padding="same",
+                name="Conv_Theta",
+            )
         )
-        self.key_conv = layers.Conv2D(
-            filters=num_channels // 8,
-            kernel_size=1,
-            padding="same",
-            kernel_constraint=SpectralNorm(),
-            name="Conv_Phi",
+
+        self.key_conv = tfa.layers.SpectralNormalization(
+            layers.Conv2D(
+                filters=num_channels // 8,
+                kernel_size=1,
+                padding="same",
+                name="Conv_Phi",
+            )
         )
-        self.conv_g = layers.Conv2D(
-            filters=num_channels // 2,
-            kernel_size=1,
-            padding="same",
-            kernel_constraint=SpectralNorm(),
-            name="Conv_G",
+
+        self.conv_g = tfa.layers.SpectralNormalization(
+            layers.Conv2D(
+                filters=num_channels // 2,
+                kernel_size=1,
+                padding="same",
+                name="Conv_G",
+            )
         )
-        self.value_conv = layers.Conv2D(
-            filters=num_channels,
-            kernel_size=1,
-            padding="same",
-            kernel_constraint=SpectralNorm(),
-            name="Conv_AttnG",
+
+        self.value_conv = tfa.layers.SpectralNormalization(
+            layers.Conv2D(
+                filters=num_channels,
+                kernel_size=1,
+                padding="same",
+                name="Conv_AttnG",
+            )
         )
+
         self.sigma = self.add_weight(
             shape=[1], initializer="zeros", trainable=True, name="sigma"
         )

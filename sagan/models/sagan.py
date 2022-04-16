@@ -1,10 +1,9 @@
 import ml_collections
-
 import tensorflow as tf
 from tensorflow import keras
 
-from .generator import build_generator
 from .discriminator import build_discriminator
+from .generator import build_generator
 
 
 def w_loss(y_true, y_pred):

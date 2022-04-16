@@ -1,8 +1,9 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
+import tensorflow_addons as tfa
+
 from sagan.models.condition_batchnorm import ConditionBatchNorm
-from sagan.models.spectral_norm import SpectralNorm
 
 
 class Resblock(layers.Layer):
@@ -13,20 +14,18 @@ class Resblock(layers.Layer):
 
     def build(self, input_shape):
         input_filter = input_shape[-1]
-        self.conv_1 = layers.Conv2D(
-            filters=self.filters,
-            kernel_size=3,
-            padding="same",
-            name="conv2d_1",
-            kernel_constraint=SpectralNorm(),
+        self.conv_1 = tfa.layers.SpectralNormalization(
+            layers.Conv2D(
+                filters=self.filters, kernel_size=3, padding="same", name="conv2d_1"
+            )
         )
-        self.conv_2 = layers.Conv2D(
-            filters=self.filters,
-            kernel_size=3,
-            padding="same",
-            name="conv2d_2",
-            kernel_constraint=SpectralNorm(),
+
+        self.conv_2 = tfa.layers.SpectralNormalization(
+            layers.Conv2D(
+                filters=self.filters, kernel_size=3, padding="same", name="conv2d_2"
+            )
         )
+
         self.cbn_1 = ConditionBatchNorm(self.n_class)
         self.cbn_2 = ConditionBatchNorm(self.n_class)
         self.learned_skip = False
@@ -34,11 +33,7 @@ class Resblock(layers.Layer):
         if self.filters != input_filter:
             self.learned_skip = True
             self.conv_3 = layers.Conv2D(
-                filters=self.filters,
-                kernel_size=1,
-                padding="same",
-                name="conv2d_3",
-                kernel_constraint=SpectralNorm(),
+                filters=self.filters, kernel_size=1, padding="same", name="conv2d_3"
             )
             self.cbn_3 = ConditionBatchNorm(self.n_class)
 

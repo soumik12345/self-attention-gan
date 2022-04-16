@@ -1,9 +1,6 @@
-from absl import app
-from absl import flags
-
-from tensorflow import keras
-
+from absl import app, flags
 from ml_collections.config_flags import config_flags
+from tensorflow import keras
 
 from sagan.dataloader import DataLoader
 from sagan.models.sagan import SelfAttentionGAN

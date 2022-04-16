@@ -1,4 +1,5 @@
 import unittest
+
 import tensorflow as tf
 
 from sagan import DataLoader
