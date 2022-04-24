@@ -1,4 +1,5 @@
 import unittest
+
 import tensorflow as tf
 
 from sagan import DataLoader
@@ -7,14 +8,16 @@ from sagan import DataLoader
 class DataLoaderTester(unittest.TestCase):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.data_loader = DataLoader(dataset_name="caltech_birds2011")
+        self.data_loader = DataLoader(dataset_name="tf_flowers")
 
     def test_train_dataset(self):
-        train_dataset = self.data_loader.get_dataset(split="train", batch_size=16)
+        train_dataset, _ = self.data_loader.get_dataset(batch_size=16)
         data = next(iter(train_dataset))
+        print(data.shape)
         assert data.shape == (16, 64, 64, 3)
 
     def test_train_dataset(self):
-        test_dataset = self.data_loader.get_dataset(split="test", batch_size=16)
+        _, test_dataset = self.data_loader.get_dataset(batch_size=16)
         data = next(iter(test_dataset))
+        print(data.shape)
         assert data.shape == (16, 64, 64, 3)
