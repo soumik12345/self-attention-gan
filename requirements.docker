@@ -4,3 +4,4 @@ opencv-python==4.5.4.58
 pytest==6.2.5
 tensorflow-addons==0.14.0
 tensorflow-datasets==4.4.0
+wandb

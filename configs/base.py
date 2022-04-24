@@ -3,6 +3,10 @@ import ml_collections
 
 def get_config() -> ml_collections.ConfigDict:
     config = ml_collections.ConfigDict()
+
+    config.use_wandb = False  # For using weights and biases
+    config.project_name = "Self-Attention-GAN"  # wandb project name
+
     config.batch_size = 64  # Batch Size
     config.epochs = 100  # Number of Epochs
     config.image_size = 128  # Image Size
