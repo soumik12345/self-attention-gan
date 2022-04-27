@@ -6,6 +6,7 @@ from absl import app, flags, logging
 from ml_collections.config_flags import config_flags
 from tensorflow import keras
 
+from sagan.callbacks import CheckpointArtifactCallback
 from sagan.dataloader import DataLoader
 from sagan.models.sagan import SelfAttentionGAN
 from sagan.utils import init_wandb, initialize_device
@@ -49,6 +50,13 @@ def main(_):
 
     if FLAGS.experiment_configs.use_wandb:
         train_callbacks.append(wandb.keras.WandbCallback())
+        train_callbacks.append(
+            CheckpointArtifactCallback(
+                experiment_name=FLAGS.experiment_configs.project_name,
+                model_name=f"{FLAGS.experiment_configs.project_name}_{timestamp}",
+                wandb_run=wandb,
+            )
+        )
 
     ## Load the model
     sagan = SelfAttentionGAN(FLAGS.experiment_configs.latent_dim)
