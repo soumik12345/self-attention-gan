@@ -44,21 +44,8 @@ def main(_):
     # Setting up callback
     logging.info("Initializing callbacks.")
 
-    # Model Checkpoint Callback
-    checkpoint_callback = keras.callbacks.ModelCheckpoint(
-        filepath=f"{FLAGS.experiment_configs.checkpoint_filepath}_{timestamp}",
-        save_best_only=True,
-        save_weights_only=True,
-    )
-
-    logger_path = os.path.join(
-        "training_logs",
-        f"{FLAGS.experiment_configs.project_name}_{timestamp}",
-    )
-    logger_callback = keras.callbacks.CSVLogger(filepath=logger_path)
-
     # Pack the callbacks as a list.
-    train_callbacks = [checkpoint_callback, logger_callback]
+    train_callbacks = []
 
     if FLAGS.experiment_configs.use_wandb:
         train_callbacks.append(wandb.keras.WandbCallback())
