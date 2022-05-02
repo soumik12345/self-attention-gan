@@ -24,7 +24,7 @@ class GanMonitor(keras.callbacks.Callback):
         self.epoch_interval = epoch_interval
         self.plot_save_dir = plot_save_dir
         self.use_wandb = use_wandb
-        self.columns = ["Semantic Mask", "Ground Truth", "Generated Image"]
+        self.columns = ["Generated Image"]
 
         if self.plot_save_dir:
             logging.info(f"Intermediate images will be serialized to: {plot_save_dir}.")
@@ -36,12 +36,10 @@ class GanMonitor(keras.callbacks.Callback):
         )
         return self.model.predict([latent_vector, self.val_images[2]])
 
-    def log_to_tables(self, epoch, semantic_input, ground_truth, generated_images):
+    def log_to_tables(self, epoch, generated_images):
         wandb_table = wandb.Table(columns=self.columns)
         for i in range(self.num_images_plot):
             wandb_table.add_data(
-                wandb.Image(semantic_input[i]),
-                wandb.Image(ground_truth[i]),
                 wandb.Image(generated_images[i]),
             )
         wandb.log({f"GANMonitor Epoch {epoch}": wandb_table})
@@ -55,13 +53,11 @@ class GanMonitor(keras.callbacks.Callback):
             generated_images = (generated_images + 1) / 2
 
             if self.use_wandb:
-                self.log_to_tables(
-                    epoch + 1, semantic_input, ground_truth, generated_images
-                )
+                self.log_to_tables(epoch + 1, generated_images)
 
             for i in range(self.num_images_plot):
                 fig = plot_results(
-                    [semantic_input[i], ground_truth[i], generated_images[i]],
+                    [generated_images[i]],
                     self.columns,
                     figure_size=(18, 18),
                 )
