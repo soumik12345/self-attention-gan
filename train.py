@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 
 import wandb
@@ -6,7 +5,7 @@ from absl import app, flags, logging
 from ml_collections.config_flags import config_flags
 from tensorflow import keras
 
-from sagan.callbacks import CheckpointArtifactCallback
+from sagan.callbacks import CheckpointArtifactCallback, GanMonitor
 from sagan.dataloader import DataLoader
 from sagan.models.sagan import SelfAttentionGAN
 from sagan.utils import init_wandb, initialize_device
@@ -57,6 +56,16 @@ def main(_):
                 wandb_run=wandb,
             )
         )
+
+    train_callbacks.append(
+        gan_monitor_callback=GanMonitor(
+            pipeline_test,
+            FLAGS.experiment_configs.batch_size,
+            epoch_interval=FLAGS.experiment_configs.epoch_interval,
+            use_wandb=True if FLAGS.experiment_configs.use_wandb else False,
+            plot_save_dir=FLAGS.experiment_configs.plot_save_dir,  # Change `FLAGS.experiment_configs.plot_save_dir` to control this.
+        )
+    )
 
     ## Load the model
     sagan = SelfAttentionGAN(FLAGS.experiment_configs.latent_dim)
