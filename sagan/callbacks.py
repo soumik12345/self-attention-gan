@@ -47,9 +47,6 @@ class GanMonitor(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         if epoch == 0 or (epoch + 1) % self.epoch_interval == 0:
             generated_images = self.infer()
-
-            semantic_input = (self.val_images[0] + 1) / 2
-            ground_truth = (self.val_images[1] + 1) / 2
             generated_images = (generated_images + 1) / 2
 
             if self.use_wandb:
